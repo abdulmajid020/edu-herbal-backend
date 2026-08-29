@@ -154,7 +154,7 @@ export class CallController {
         patient.lastCallMode = mode || "Phone";
       }
 
-      return res.status(201).json({
+      return res.status(200).json({
         success: true,
         message: `${mode || "Call"} logged for ${patientName || "patient"}.`,
         data: newLog,
