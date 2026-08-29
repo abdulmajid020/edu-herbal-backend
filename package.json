@@ -2,11 +2,11 @@
   "name": "edu-herbal-backend",
   "version": "1.0.0",
   "description": "Production Backend API & Real-time Services for Edu-Herbal Clinic",
-  "main": "dist/server.js",
+  "main": "dist/src/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:seed": "ts-node prisma/seed.ts",
