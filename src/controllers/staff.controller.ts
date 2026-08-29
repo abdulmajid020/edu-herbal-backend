@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { prisma, MemoryStore } from "../config/database";
 import bcrypt from "bcryptjs";
 
-// In-memory announcement store
 interface StaffAnnouncement {
   id: number;
   title: string;
@@ -60,11 +59,11 @@ export class StaffController {
         list = list.filter((s) => s.status.toLowerCase() === status.toLowerCase());
       }
 
-      const allMembers = dbStaff.length > 0 ? dbStaff : MemoryStore.staff;
+      const allList = dbStaff.length > 0 ? list : MemoryStore.staff;
       const counts = {
-        present: allMembers.filter((s: any) => s.status === "Present").length,
-        leave: allMembers.filter((s: any) => s.status === "Leave").length,
-        remote: allMembers.filter((s: any) => s.status === "Remote").length,
+        present: allList.filter((s) => s.status === "Present").length,
+        leave: allList.filter((s) => s.status === "Leave").length,
+        remote: allList.filter((s) => s.status === "Remote").length,
       };
 
       return res.status(200).json({
@@ -138,7 +137,7 @@ export class StaffController {
         status: assignedStatus,
       };
 
-      MemoryStore.staff.push(newStaff);
+      MemoryStore.staff.push(newStaff as any);
 
       return res.status(201).json({
         success: true,
@@ -182,7 +181,6 @@ export class StaffController {
         if (role) staffMember.role = role.trim();
         if (assignedDept) {
           staffMember.department = assignedDept.trim();
-          staffMember.dept = assignedDept.trim();
         }
         if (schedule) staffMember.schedule = schedule.trim();
         if (status) staffMember.status = status;
