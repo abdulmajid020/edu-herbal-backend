@@ -1,0 +1,565 @@
+{
+  "info": {
+    "_postman_id": "edu-herbal-clinic-api-v1",
+    "name": "Edu-Herbal Clinic API",
+    "description": "Comprehensive Postman Test Collection for Edu-Herbal Clinic Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Health & Root",
+      "item": [
+        {
+          "name": "API Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Authentication & Staff",
+      "item": [
+        {
+          "name": "Staff Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('authToken', jsonData.token);",
+                  "}",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"edhecman2@gmail.com\",\n  \"phone\": \"0558379545\",\n  \"password\": \"SecurePassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Staff Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Clinician\",\n  \"email\": \"testclinician@eduherbal.com\",\n  \"phone\": \"0245000099\",\n  \"password\": \"StaffPassword2026\",\n  \"confirmPassword\": \"StaffPassword2026\",\n  \"role\": \"Staff\",\n  \"department\": \"Clinical\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Password Reset Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"edhecman2@gmail.com\",\n  \"phone\": \"0558379545\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-request",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-request"]
+            }
+          }
+        },
+        {
+          "name": "Get Current Staff Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Patients CRM",
+      "item": [
+        {
+          "name": "List Patients (Grouped & Filtered)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients?status=Active",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Active"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients?search=Ama",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Ama"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Patient by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create New Patient (with Appointment & SMS)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kwesi Boateng\",\n  \"phone\": \"0249876543\",\n  \"condition\": \"Chronic Back Pain\",\n  \"doctorId\": 1,\n  \"date\": \"2026-09-12\",\n  \"time\": \"10:00 AM\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/patients",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Appointments & Booking",
+      "item": [
+        {
+          "name": "Get Doctors and Time Slots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/doctors",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "doctors"]
+            }
+          }
+        },
+        {
+          "name": "Get Today's Appointments Queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/today",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "today"]
+            }
+          }
+        },
+        {
+          "name": "Book Online Appointment (Public Form Wizard)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service\": \"Special General Consultation\",\n  \"doctorId\": 1,\n  \"fullName\": \"Akosua Mensah\",\n  \"phone\": \"0558379545\",\n  \"email\": \"akosua@example.com\",\n  \"notes\": \"Recurrent waist pains\",\n  \"date\": \"2026-09-15\",\n  \"time\": \"02:00 PM\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Products & Inventory",
+      "item": [
+        {
+          "name": "Get Products Catalogue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "Get Inventory Stock & Safety Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory"]
+            }
+          }
+        },
+        {
+          "name": "Restock Product Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": \"Edhec SM Bitters\",\n  \"category\": \"Bitters\",\n  \"stock\": 50,\n  \"min\": 10,\n  \"unit\": \"units\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/restock",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "restock"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. Orders & Mobile Money Payments",
+      "item": [
+        {
+          "name": "Cart Checkout (Mobile Money)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 2\n    },\n    {\n      \"productId\": 2,\n      \"quantity\": 1\n    }\n  ],\n  \"paymentMethod\": \"Mobile Money\",\n  \"recipientName\": \"Ama Owusu\",\n  \"recipientNumber\": \"0244567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/checkout",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "checkout"]
+            }
+          }
+        },
+        {
+          "name": "Get Sales Metrics (KPIs)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "Get Top-Selling Products Ranking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales/top-selling",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", "top-selling"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment Tracker Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07. Call Centre & Logs",
+      "item": [
+        {
+          "name": "Get Call Centre Logs & Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls",
+              "host": ["{{baseUrl}}"],
+              "path": ["calls"]
+            }
+          }
+        },
+        {
+          "name": "Log Outbound Dial / WhatsApp Call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientName\": \"Ama Owusu\",\n  \"phone\": \"0244567890\",\n  \"mode\": \"WhatsApp\",\n  \"attemptedAt\": \"10:15 AM\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/call",
+              "host": ["{{baseUrl}}"],
+              "path": ["call"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08. EduBot AI Chat & Live Handover",
+      "item": [
+        {
+          "name": "Authenticate Patient Chat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kwame Asante\",\n  \"phone\": \"0241234567\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chat/auth",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat", "auth"]
+            }
+          }
+        },
+        {
+          "name": "Send Message to EduBot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"0241234567\",\n  \"patientName\": \"Kwame Asante\",\n  \"text\": \"What herbal medicines do you have for malaria?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chat/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat", "send"]
+            }
+          }
+        },
+        {
+          "name": "Send Message (Trigger Human Handover)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"0241234567\",\n  \"patientName\": \"Kwame Asante\",\n  \"text\": \"I want to speak with a human doctor or staff member.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chat/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat", "send"]
+            }
+          }
+        },
+        {
+          "name": "Get Admin Live Handover Conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/chat/admin/conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat", "admin", "conversations"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "09. Monthly Reports & CSV Exports",
+      "item": [
+        {
+          "name": "Generate Month-End Close Report",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/monthly-close",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "monthly-close"]
+            }
+          }
+        },
+        {
+          "name": "Get Monthly Reports History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/monthly",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "monthly"]
+            }
+          }
+        },
+        {
+          "name": "Export All Reports as CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/monthly/export-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "monthly", "export-all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Content Management (CMS)",
+      "item": [
+        {
+          "name": "Get Hero Slides",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/hero-slides",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "hero-slides"]
+            }
+          }
+        },
+        {
+          "name": "Get Blog Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blog-posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog-posts"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

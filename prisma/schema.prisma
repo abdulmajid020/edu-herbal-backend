@@ -1,0 +1,322 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum StaffStatus {
+  Present
+  Leave
+  Remote
+}
+
+enum PatientStatus {
+  Active
+  Follow_up
+  Pending
+  Discharged
+}
+
+enum AppointmentStatus {
+  Pending
+  Confirmed
+  Completed
+  Upcoming
+  Cancelled
+}
+
+enum CallType {
+  incoming
+  missed
+  returned
+}
+
+enum CallStatus {
+  resolved
+  unresolved
+}
+
+enum PaymentStatus {
+  Paid
+  Pending
+  Refunded
+}
+
+enum MessageRole {
+  user
+  bot
+}
+
+enum MessageSender {
+  patient
+  edubot
+  staff
+}
+
+model StaffAccount {
+  id             Int         @id @default(autoincrement())
+  name           String
+  email          String      @unique
+  phone          String      @unique
+  passwordHash   String      @map("password_hash")
+  role           String
+  department     String
+  schedule       String      @default("8AM–5PM")
+  status         StaffStatus @default(Present)
+  failedAttempts Int         @default(0) @map("failed_attempts")
+  isLocked       Boolean     @default(false) @map("is_locked")
+  resetRequested Boolean     @default(false) @map("reset_requested")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  @@map("staff_accounts")
+}
+
+model Doctor {
+  id             Int           @id @default(autoincrement())
+  name           String
+  specialty      String
+  initials       String
+  availableSlots String[]      @default([]) @map("available_slots")
+  isActive       Boolean       @default(true) @map("is_active")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  patients       Patient[]
+  appointments   Appointment[]
+
+  @@map("doctors")
+}
+
+model Patient {
+  id               Int           @id @default(autoincrement())
+  name             String
+  phone            String        @unique
+  email            String?
+  condition        String
+  status           PatientStatus @default(Pending)
+  assignedDoctorId Int?          @map("assigned_doctor_id")
+  assignedDoctor   Doctor?       @relation(fields: [assignedDoctorId], references: [id], onDelete: SetNull)
+  balance          Decimal       @default(0.00) @db.Decimal(10, 2)
+  lastVisit        String?       @map("last_visit")
+  nextAppt         String?       @map("next_appt")
+  lastCallAt       String?       @map("last_call_at")
+  callCount        Int           @default(0) @map("call_count")
+  lastCallMode     String?       @map("last_call_mode")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  appointments     Appointment[]
+  orders           Order[]
+  payments         Payment[]
+  callLogs         CallLog[]
+
+  @@index([phone])
+  @@index([status])
+  @@map("patients")
+}
+
+model Appointment {
+  id          Int               @id @default(autoincrement())
+  patientName String            @map("patient_name")
+  phone       String
+  email       String?
+  service     String
+  doctorId    Int               @map("doctor_id")
+  doctor      Doctor            @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  doctorName  String            @map("doctor_name")
+  date        DateTime          @db.Date
+  time        String
+  status      AppointmentStatus @default(Confirmed)
+  notes       String?
+  patientId   Int?              @map("patient_id")
+  patient     Patient?          @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@index([date])
+  @@index([phone])
+  @@map("appointments")
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  category    String
+  price       Decimal     @db.Decimal(10, 2)
+  imageUrl    String?     @map("image_url")
+  description String
+  isActive    Boolean     @default(true) @map("is_active")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  inventory   Inventory?
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+model Inventory {
+  id              Int      @id @default(autoincrement())
+  productId       Int      @unique @map("product_id")
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  item            String
+  category        String
+  stock           Int      @default(0)
+  minLevel        Int      @default(5) @map("min_level")
+  safetyThreshold Int      @default(35) @map("safety_threshold")
+  unit            String   @default("units")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([stock])
+  @@map("inventory")
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  patientId       Int?        @map("patient_id")
+  patient         Patient?    @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  description     String
+  totalAmount     Decimal     @map("total_amount") @db.Decimal(10, 2)
+  paymentMethod   String      @map("payment_method")
+  status          String      @default("Paid")
+  recipientName   String      @map("recipient_name")
+  recipientNumber String      @map("recipient_number")
+  orderDate       String      @map("order_date")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  items           OrderItem[]
+  payments        Payment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int      @map("order_id")
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int?     @map("product_id")
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name      String
+  quantity  Int
+  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2)
+  subtotal  Decimal  @db.Decimal(10, 2)
+
+  @@map("order_items")
+}
+
+model Payment {
+  id              Int           @id @default(autoincrement())
+  orderId         Int?          @map("order_id")
+  order           Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  patientId       Int?          @map("patient_id")
+  patient         Patient?      @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  description     String
+  amount          Decimal       @db.Decimal(10, 2)
+  method          String
+  status          PaymentStatus @default(Paid)
+  recipientName   String        @map("recipient_name")
+  recipientNumber String        @map("recipient_number")
+  dateLabel       String        @map("date_label")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@map("payments")
+}
+
+model CallLog {
+  id          Int        @id @default(autoincrement())
+  patientId   Int?       @map("patient_id")
+  patient     Patient?   @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  patientName String     @map("patient_name")
+  phone       String
+  timeLabel   String     @map("time_label")
+  type        CallType
+  duration    String     @default("0:00")
+  status      CallStatus @default(unresolved)
+  note        String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@map("call_logs")
+}
+
+model ChatConversation {
+  id              Int           @id @default(autoincrement())
+  phone           String        @unique
+  patientName     String        @map("patient_name")
+  handoverActive  Boolean       @default(false) @map("handover_active")
+  handoverHandled Boolean       @default(false) @map("handover_handled")
+  handoverClosed  Boolean       @default(false) @map("handover_closed")
+  lastMessageAt   DateTime      @default(now()) @map("last_message_at")
+  messages        ChatMessage[]
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id                Int              @id @default(autoincrement())
+  conversationId    Int              @map("conversation_id")
+  conversation      ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  phone             String
+  patientName       String?          @map("patient_name")
+  role              MessageRole
+  sender            MessageSender
+  text              String
+  handoverRequested Boolean          @default(false) @map("handover_requested")
+  handoverHandled   Boolean          @default(false) @map("handover_handled")
+  handoverClosed    Boolean          @default(false) @map("handover_closed")
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  @@map("chat_messages")
+}
+
+model HeroSlide {
+  id            Int      @id @default(autoincrement())
+  badge         String
+  eyebrow       String
+  title         String
+  description   String
+  panelTitle    String   @map("panel_title")
+  panelSubtitle String   @map("panel_subtitle")
+  panelAccent   String   @default("#1C7A3A") @map("panel_accent")
+  background    String   @default("#1C7A3A")
+  imageUrl      String   @map("image_url")
+  overlayText   String?  @map("overlay_text")
+  subText       String?  @map("sub_text")
+  smallText     String?  @map("small_text")
+  statsJson     Json     @default("[]") @map("stats_json")
+  displayOrder  Int      @default(0) @map("display_order")
+  isActive      Boolean  @default(true) @map("is_active")
+
+  @@map("hero_slides")
+}
+
+model BlogPost {
+  id          Int      @id @default(autoincrement())
+  title       String
+  category    String
+  dateLabel   String   @map("date_label")
+  readTime    String   @default("5 min") @map("read_time")
+  excerpt     String
+  content     String?
+  imageUrl    String   @map("image_url")
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("blog_posts")
+}
+
+model MonthlyReport {
+  id                Int      @id @default(autoincrement())
+  month             String
+  year              Int
+  totalRevenue      Decimal  @map("total_revenue") @db.Decimal(12, 2)
+  totalOrders       Int      @map("total_orders")
+  totalUnits        Int      @map("total_units")
+  topProduct        String   @map("top_product")
+  topProductUnits   Int      @map("top_product_units")
+  topProductRevenue Decimal  @map("top_product_revenue") @db.Decimal(12, 2)
+  lowStockCount     Int      @map("low_stock_count")
+  productsSoldJson  Json     @default("[]") @map("products_sold_json")
+  generatedAt       DateTime @default(now()) @map("generated_at")
+
+  @@map("monthly_reports")
+}
