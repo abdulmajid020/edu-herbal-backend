@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3001/api",
+      "value": "https://edu-herbal-backend.onrender.com/api",
       "type": "string"
     },
     {
