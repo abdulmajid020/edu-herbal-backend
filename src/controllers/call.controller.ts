@@ -227,4 +227,42 @@ export class CallController {
       return res.status(500).json({ success: false, error: err.message || "Failed to toggle call status." });
     }
   }
+
+  public static async markQrScan(req: Request, res: Response) {
+    const id = parseInt(String(req.params.id), 10);
+    const attemptedAt = new Date().toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    const scanNote = `QR scan completed at ${attemptedAt}.`;
+
+    try {
+      try {
+        const existing = await prisma.callLog.findUnique({ where: { id } });
+        if (existing) {
+          const updatedNote = existing.note ? `${existing.note} ${scanNote}` : scanNote;
+          await prisma.callLog.update({
+            where: { id },
+            data: { note: updatedNote },
+          });
+        }
+      } catch {}
+
+      const call = MemoryStore.callLogs.find((c) => c.id === id);
+      if (call) {
+        call.note = call.note ? `${call.note} ${scanNote}` : scanNote;
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "QR scan recorded.",
+        data: call || { id, note: scanNote },
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message || "Failed to record QR scan." });
+    }
+  }
 }
