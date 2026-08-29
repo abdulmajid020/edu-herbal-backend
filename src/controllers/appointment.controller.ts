@@ -131,11 +131,12 @@ export class AppointmentController {
     if (isTelemedicine) {
       // ─── Route to Call Centre ─────────────────────────────────────────────
       routedTo = "callcentre";
+      const timeLabel = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
       const callEntry = {
         id: Date.now() + 2,
         patient: fullName.trim(),
         phone: normalizedPhone,
-        time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }),
+        time: timeLabel,
         type: "incoming" as const,
         duration: "0:00",
         status: "unresolved" as const,
@@ -150,7 +151,8 @@ export class AppointmentController {
           data: {
             patientName: fullName.trim(),
             phone: normalizedPhone,
-            callType: "incoming",
+            timeLabel: timeLabel,
+            type: "incoming",
             duration: "0:00",
             status: "unresolved",
             note: callEntry.note,
@@ -167,7 +169,7 @@ export class AppointmentController {
       if (existingPatient) {
         existingPatient.condition = service.trim();
         existingPatient.nextAppt = `${date} · ${time}`;
-        existingPatient.doctor = doctor.name;
+        existingPatient.assignedDoctorName = doctor.name;
         existingPatient.status = "Active";
       } else {
         const newPatient = {
@@ -177,7 +179,7 @@ export class AppointmentController {
           condition: service.trim(),
           lastVisit: "Just booked",
           nextAppt: `${date} · ${time}`,
-          doctor: doctor.name,
+          assignedDoctorName: doctor.name,
           status: "Active" as const,
           balance: 0,
           products: [service.trim()],
