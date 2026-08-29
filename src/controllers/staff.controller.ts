@@ -41,7 +41,7 @@ export class StaffController {
         console.warn("[STAFF DB WARNING] Falling back to MemoryStore:", dbErr);
       }
 
-      let list = dbStaff.length > 0
+      let list: any[] = dbStaff.length > 0
         ? dbStaff.map((s) => ({
             id: s.id,
             name: s.name,
