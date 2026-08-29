@@ -59,11 +59,11 @@ export class StaffController {
         list = list.filter((s) => s.status.toLowerCase() === status.toLowerCase());
       }
 
-      const allList = dbStaff.length > 0 ? list : MemoryStore.staff;
+      const allList: any[] = dbStaff.length > 0 ? list : MemoryStore.staff;
       const counts = {
-        present: allList.filter((s) => s.status === "Present").length,
-        leave: allList.filter((s) => s.status === "Leave").length,
-        remote: allList.filter((s) => s.status === "Remote").length,
+        present: allList.filter((s: any) => s.status === "Present").length,
+        leave: allList.filter((s: any) => s.status === "Leave").length,
+        remote: allList.filter((s: any) => s.status === "Remote").length,
       };
 
       return res.status(200).json({
