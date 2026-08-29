@@ -407,4 +407,18 @@ export class AuthController {
       return res.status(500).json({ success: false, error: err.message || "Failed to load profile." });
     }
   }
+
+  public static async logout(req: AuthenticatedRequest, res: Response) {
+    const user = req.user;
+    if (user) {
+      console.log(`[AUDIT - STAFF LOGOUT] Staff ID: ${user.id}, Email: ${user.email} logged out at ${new Date().toISOString()}`);
+    } else {
+      console.log(`[AUDIT - STAFF LOGOUT] Session cleared at ${new Date().toISOString()}`);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Staff member logged out successfully.",
+    });
+  }
 }
