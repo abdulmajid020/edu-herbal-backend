@@ -17,6 +17,34 @@ import { OrderController } from "../controllers/order.controller";
 
 const router = Router();
 
+// API Root / Documentation Index
+router.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "🌿 Welcome to the Edu-Herbal Clinic REST API",
+    version: "1.0.0",
+    healthCheck: "/api/health",
+    endpoints: {
+      auth: "/api/auth/*",
+      patients: "/api/patients",
+      appointments: "/api/appointments",
+      doctors: "/api/appointments/doctors",
+      products: "/api/products",
+      inventory: "/api/inventory",
+      orders: "/api/orders",
+      payments: "/api/payments",
+      salesMetrics: "/api/sales/metrics",
+      topSelling: "/api/sales/top-selling",
+      calls: "/api/calls",
+      chat: "/api/chat/*",
+      content: "/api/content/hero-slides & /api/content/blog-posts",
+      reports: "/api/reports/*",
+      staff: "/api/staff",
+    },
+    documentation: "Import postman/Edu-Herbal-API.postman_collection.json in Postman to test all endpoints.",
+  });
+});
+
 // Health Check
 router.get("/health", (req, res) => {
   res.status(200).json({
