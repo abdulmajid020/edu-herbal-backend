@@ -254,7 +254,7 @@ export class StaffController {
   }
 
   public static async postAnnouncement(req: Request, res: Response) {
-    const { title, message, author } = req.body;
+    const { title, message, author, createdAt } = req.body;
 
     if (!title || !message) {
       return res.status(400).json({ success: false, error: "Title and message are required." });
@@ -265,7 +265,7 @@ export class StaffController {
       title: title.trim(),
       message: message.trim(),
       author: author || "Management",
-      createdAt: new Date().toISOString(),
+      createdAt: createdAt || new Date().toISOString(),
     };
 
     staffAnnouncements.unshift(newAnnouncement);

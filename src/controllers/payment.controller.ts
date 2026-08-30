@@ -52,17 +52,26 @@ export class PaymentController {
   }
 
   public static async getSalesMetrics(req: Request, res: Response) {
+    const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const todayRevenue = MemoryStore.payments
+      .filter((p) => p.status === "Paid" && p.date === today)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    const totalRevenue = MemoryStore.payments
+      .filter((p) => p.status === "Paid")
+      .reduce((sum, p) => sum + p.amount, 0);
+
     return res.status(200).json({
       success: true,
-      todayRevenue: 1800,
-      yesterdayRevenue: 1500,
-      weekRevenue: 12400,
-      lastWeekRevenue: 10900,
-      monthRevenue: 21200,
-      consultationsThisMonth: 142,
-      bestDay: "Wednesday",
-      bestDayAvg: 4200,
-      revenueDelta: "+20% vs yesterday",
+      todayRevenue,
+      yesterdayRevenue: 0,
+      weekRevenue: totalRevenue,
+      lastWeekRevenue: 0,
+      monthRevenue: totalRevenue,
+      consultationsThisMonth: MemoryStore.appointments.length,
+      bestDay: "Today",
+      bestDayAvg: todayRevenue,
+      revenueDelta: todayRevenue > 0 ? "+100%" : "GHS 0",
     });
   }
 }
