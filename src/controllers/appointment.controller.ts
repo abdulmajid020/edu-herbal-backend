@@ -85,6 +85,7 @@ export class AppointmentController {
     const normalizedPhone = normalizePhone(phone);
     const doctor = MemoryStore.doctors.find((d) => d.id === Number(doctorId)) || MemoryStore.doctors[0];
     const isTelemedicine = service.toLowerCase().includes("telemedicine") || service.toLowerCase().includes("video");
+    const isFollowUp = /follow[- ]?up/i.test(service);
 
     const newAppointment = {
       id: Date.now(),
@@ -96,7 +97,7 @@ export class AppointmentController {
       doctorName: doctor.name,
       date,
       time,
-      status: "Confirmed" as const,
+      status: "Pending" as const,
       notes: notes || null,
       createdAt: new Date().toISOString(),
     };
@@ -117,7 +118,7 @@ export class AppointmentController {
             doctorName: doctor.name,
             date: parsedDate,
             time,
-            status: "Confirmed",
+            status: "Pending",
             notes: notes || null,
           },
         }).catch(() => null);
@@ -166,21 +167,24 @@ export class AppointmentController {
         (p) => phonesMatch(p.phone, normalizedPhone) || p.name.toLowerCase() === fullName.trim().toLowerCase()
       );
 
+      const targetStatus = isFollowUp ? "Follow-up" : "Pending";
+      const prismaTargetStatus = isFollowUp ? "Follow_up" : "Pending";
+
       if (existingPatient) {
         existingPatient.condition = service.trim();
         existingPatient.nextAppt = `${date} · ${time}`;
         existingPatient.assignedDoctorName = doctor.name;
-        existingPatient.status = "Active";
+        existingPatient.status = targetStatus as any;
       } else {
         const newPatient = {
           id: Date.now() + 1,
           name: fullName.trim(),
           phone: normalizedPhone,
           condition: service.trim(),
-          lastVisit: "Just booked",
+          lastVisit: isFollowUp ? "Follow-up scheduled" : "Just booked",
           nextAppt: `${date} · ${time}`,
           assignedDoctorName: doctor.name,
-          status: "Active" as const,
+          status: targetStatus as any,
           balance: 0,
           products: [service.trim()],
           callCount: 0,
@@ -195,14 +199,15 @@ export class AppointmentController {
             update: {
               condition: service.trim(),
               nextAppt: `${date} · ${time}`,
+              status: prismaTargetStatus as any,
             },
             create: {
               name: fullName.trim(),
               phone: normalizedPhone,
               condition: service.trim(),
-              status: "Active",
+              status: prismaTargetStatus as any,
               balance: 0,
-              lastVisit: "Just booked",
+              lastVisit: isFollowUp ? "Follow-up scheduled" : "Just booked",
               nextAppt: `${date} · ${time}`,
             },
           }).catch(() => null);
@@ -222,8 +227,10 @@ export class AppointmentController {
     return res.status(201).json({
       success: true,
       message: isTelemedicine
-        ? "Telemedicine session requested and routed to Call Centre. Confirmation SMS prepared."
-        : "Appointment confirmed and recorded in Patient CRM. Confirmation SMS prepared.",
+        ? "Telemedicine session requested and routed to Call Centre. Awaiting admin confirmation."
+        : isFollowUp
+          ? "Follow-up booking recorded in Patient CRM under Follow-up section."
+          : "Appointment recorded in Patient CRM under Pending section. Awaiting admin confirmation.",
       data: newAppointment,
       routedTo,
       sms: smsResult,
@@ -240,6 +247,35 @@ export class AppointmentController {
     }
 
     appt.status = status;
+
+    if (status === "Confirmed") {
+      const targetPatient = MemoryStore.patients.find(
+        (p) => phonesMatch(p.phone, appt.phone) || p.name.toLowerCase() === appt.patientName.toLowerCase()
+      );
+      if (targetPatient && targetPatient.status === "Pending") {
+        targetPatient.status = "Active";
+      }
+
+      try {
+        await prisma.patient.updateMany({
+          where: {
+            phone: appt.phone,
+            status: "Pending",
+          },
+          data: { status: "Active" },
+        });
+      } catch {}
+    }
+
+    try {
+      await prisma.appointment.updateMany({
+        where: { id },
+        data: { status },
+      });
+    } catch (err) {
+      console.warn("[APPOINTMENT DB STATUS UPDATE]", err);
+    }
+
     return res.status(200).json({
       success: true,
       message: `Appointment status updated to ${status}.`,
