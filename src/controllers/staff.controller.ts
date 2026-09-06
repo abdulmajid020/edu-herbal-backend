@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma, MemoryStore } from "../config/database";
+import { SmsService } from "../services/sms.service";
 import bcrypt from "bcryptjs";
 
 interface StaffAnnouncement {
@@ -254,7 +255,7 @@ export class StaffController {
   }
 
   public static async postAnnouncement(req: Request, res: Response) {
-    const { title, message, author, createdAt } = req.body;
+    const { title, message, author, createdAt, sendSms, targetDepartment } = req.body;
 
     if (!title || !message) {
       return res.status(400).json({ success: false, error: "Title and message are required." });
@@ -270,10 +271,48 @@ export class StaffController {
 
     staffAnnouncements.unshift(newAnnouncement);
 
+    let smsResult = null;
+    if (sendSms) {
+      try {
+        let staffPhones: string[] = [];
+        try {
+          const whereClause: any = {};
+          if (targetDepartment && targetDepartment !== "All" && targetDepartment !== "All Departments") {
+            whereClause.department = targetDepartment;
+          }
+          const dbStaff = await prisma.staffAccount.findMany({
+            where: whereClause,
+            select: { phone: true },
+          });
+          staffPhones = dbStaff.map((s) => s.phone);
+        } catch {
+          let memoryStaff = MemoryStore.staff;
+          if (targetDepartment && targetDepartment !== "All" && targetDepartment !== "All Departments") {
+            memoryStaff = memoryStaff.filter((s) => s.department.toLowerCase() === targetDepartment.toLowerCase());
+          }
+          staffPhones = memoryStaff.map((s) => s.phone);
+        }
+
+        if (staffPhones.length > 0) {
+          smsResult = await SmsService.sendStaffAnnouncement({
+            title: newAnnouncement.title,
+            message: newAnnouncement.message,
+            author: newAnnouncement.author,
+            recipients: staffPhones,
+          });
+        }
+      } catch (smsErr) {
+        console.warn("[STAFF ANNOUNCEMENT SMS ERROR]", smsErr);
+      }
+    }
+
     return res.status(201).json({
       success: true,
-      message: "Announcement broadcasted to staff portal.",
+      message: sendSms
+        ? "Announcement broadcasted to staff portal and dispatched via SMS alert."
+        : "Announcement broadcasted to staff portal.",
       announcement: newAnnouncement,
+      sms: smsResult,
     });
   }
 

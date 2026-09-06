@@ -276,10 +276,26 @@ export class AppointmentController {
       console.warn("[APPOINTMENT DB STATUS UPDATE]", err);
     }
 
+    // Auto-dispatch SMS status update to patient
+    let smsResult = null;
+    try {
+      smsResult = await SmsService.sendAppointmentStatusUpdate({
+        fullName: appt.patientName,
+        phone: appt.phone,
+        doctorName: appt.doctorName,
+        date: appt.date,
+        time: appt.time,
+        status: status,
+      });
+    } catch (smsErr) {
+      console.warn("[APPOINTMENT STATUS SMS FAILED]", smsErr);
+    }
+
     return res.status(200).json({
       success: true,
       message: `Appointment status updated to ${status}.`,
       data: appt,
+      sms: smsResult,
     });
   }
 
@@ -291,10 +307,36 @@ export class AppointmentController {
       return res.status(404).json({ success: false, error: "Appointment not found." });
     }
 
+    const removedAppt = MemoryStore.appointments[index];
     MemoryStore.appointments.splice(index, 1);
+
+    try {
+      await prisma.appointment.deleteMany({
+        where: { id },
+      });
+    } catch (err) {
+      console.warn("[APPOINTMENT DB DELETE]", err);
+    }
+
+    // Auto-dispatch cancellation SMS to patient
+    let smsResult = null;
+    try {
+      smsResult = await SmsService.sendAppointmentStatusUpdate({
+        fullName: removedAppt.patientName,
+        phone: removedAppt.phone,
+        doctorName: removedAppt.doctorName,
+        date: removedAppt.date,
+        time: removedAppt.time,
+        status: "Cancelled",
+      });
+    } catch (smsErr) {
+      console.warn("[APPOINTMENT CANCELLATION SMS FAILED]", smsErr);
+    }
+
     return res.status(200).json({
       success: true,
       message: "Appointment cancelled and removed.",
+      sms: smsResult,
     });
   }
 }

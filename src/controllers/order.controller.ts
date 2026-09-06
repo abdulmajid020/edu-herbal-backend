@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { MemoryStore } from "../config/database";
 import { normalizePhone } from "../utils/phoneFormatter";
+import { SmsService } from "../services/sms.service";
 import { OrderItemDTO } from "../types";
 
 export class OrderController {
@@ -84,11 +85,26 @@ export class OrderController {
 
     MemoryStore.payments.unshift(newPayment);
 
+    // Auto-dispatch order notification SMS to recipient
+    let smsResult = null;
+    try {
+      smsResult = await SmsService.sendOrderReadyNotification({
+        recipientName: newOrder.recipientName,
+        phone: newOrder.recipientNumber,
+        orderId: newOrder.id,
+        amount: totalAmount,
+        description: description,
+      });
+    } catch (smsErr) {
+      console.warn("[ORDER SMS NOTIFICATION ERROR]", smsErr);
+    }
+
     return res.status(201).json({
       success: true,
       message: `Payment successful. ${resolvedItems.length} medication item(s) recorded.`,
       order: newOrder,
       payment: newPayment,
+      sms: smsResult,
     });
   }
 

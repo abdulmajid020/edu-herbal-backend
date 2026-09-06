@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "test:api": "ts-node src/tests/test-api.ts"
+    "test:api": "ts-node src/tests/test-api.ts",
+    "test:sms": "ts-node src/tests/test-sms.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

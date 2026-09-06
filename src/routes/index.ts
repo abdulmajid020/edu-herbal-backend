@@ -11,6 +11,7 @@ import chatRoutes from "./chat.routes";
 import contentRoutes from "./content.routes";
 import reportRoutes from "./report.routes";
 import staffRoutes from "./staff.routes";
+import smsRoutes from "./sms.routes";
 import { CallController } from "../controllers/call.controller";
 import { PaymentController } from "../controllers/payment.controller";
 import { OrderController } from "../controllers/order.controller";
@@ -40,6 +41,7 @@ router.get("/", (req, res) => {
       content: "/api/content/hero-slides & /api/content/blog-posts",
       reports: "/api/reports/*",
       staff: "/api/staff",
+      sms: "/api/sms/*",
     },
     documentation: "Import postman/Edu-Herbal-API.postman_collection.json in Postman to test all endpoints.",
   });
@@ -69,6 +71,7 @@ router.use("/chat", chatRoutes);
 router.use("/content", contentRoutes);
 router.use("/reports", reportRoutes);
 router.use("/staff", staffRoutes);
+router.use("/sms", smsRoutes);
 
 // Direct compatibility endpoints matching frontend
 router.post("/call", CallController.logCall);
