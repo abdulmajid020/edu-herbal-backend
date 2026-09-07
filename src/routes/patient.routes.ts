@@ -5,6 +5,9 @@ import { authenticateToken } from "../middlewares/auth.middleware";
 const router = Router();
 
 router.get("/", PatientController.getPatients);
+router.post("/login", PatientController.patientLogin);
+router.post("/signup", PatientController.patientSignup);
+router.post("/reset", PatientController.patientResetPassword);
 router.get("/:id", PatientController.getPatientById);
 router.post("/", PatientController.createPatient);
 router.put("/:id", PatientController.updatePatient);

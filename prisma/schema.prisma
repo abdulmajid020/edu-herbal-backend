@@ -94,6 +94,7 @@ model Patient {
   name             String
   phone            String        @unique
   email            String?
+  passwordHash     String?       @map("password_hash")
   condition        String
   status           PatientStatus @default(Pending)
   assignedDoctorId Int?          @map("assigned_doctor_id")
